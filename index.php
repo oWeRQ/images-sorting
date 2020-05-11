@@ -111,6 +111,8 @@ $dirs = getDirs($baseDir);
                 return;
 
             loading.hidden = false;
+            next.disabled = true;
+            prev.disabled = true;
 
             const body = new FormData(form);
             if (e.submitter && e.submitter.name) {
@@ -121,7 +123,11 @@ $dirs = getDirs($baseDir);
                 .then((response) => response.json())
                 .then((result) => {
                     form.elements.src.value = image.src = result.next;
-                    index = history.push(result.dest);
+                    if (index === history.length) {
+                        index = history.push(result.dest);
+                    } else {
+                        history[index] = result.dest;
+                    }
                     updateState();
                 });
         });
