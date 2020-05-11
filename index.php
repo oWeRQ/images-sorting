@@ -10,6 +10,11 @@ $srcDir = "$baseDir/unsorted";
 
 $isAjax = isset($_SERVER['HTTP_ORIGIN']);
 
+function dirCount($path) {
+    $di = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($path), RecursiveIteratorIterator::SELF_FIRST);
+    return iterator_count($di);
+}
+
 function getFile($path) {
     if ($handle = opendir($path)) {
         while (false !== ($entry = readdir($handle))) {
@@ -49,6 +54,7 @@ if (isset($_POST['dest'])) {
     die();
 }
 
+$count = dirCount($srcDir);
 $image = getFile($srcDir);
 $dirs = getDirs($baseDir);
 ?>
@@ -62,11 +68,16 @@ $dirs = getDirs($baseDir);
     </div>
     <div class="status">    
         <div>
-            <input type="text" readonly name="src" value="<?=$image?>">
-            <span id="count">1</span>
-            <span id="loading">Loading...</span>
+            <input type="text" readonly name="src" value="<?=$image?>" size="9">
+            <span id="loading">Wait...</span>
         </div>
-        <button id="undo" type="button" disabled>undo</button>
+        <div>
+            <small>
+                <span id="count">1</span>/<?=$count?>
+            </small>
+            <button id="prev" type="button" disabled>Prev</button>
+            <button id="next" type="button" disabled>Next</button>
+        </div>
     </div>
     <div class="buttons">
         <?php foreach ($dirs as $i => $dir) if ($dir !== $srcDir): ?>
@@ -81,9 +92,11 @@ $dirs = getDirs($baseDir);
         const loading = document.querySelector('#loading');
         const count = document.querySelector('#count');
         const form = document.querySelector('#form');
-        const undo = document.querySelector('#undo');
+        const prev = document.querySelector('#prev');
+        const next = document.querySelector('#next');
 
         const history = [];
+        let index = 0;
 
         image.src = <?=json_encode($image)?>;
 
@@ -108,21 +121,32 @@ $dirs = getDirs($baseDir);
                 .then((response) => response.json())
                 .then((result) => {
                     form.elements.src.value = image.src = result.next;
-                    history.push(result.dest);
-                    count.innerText = history.length + 1;
-                    undo.disabled = false;
+                    index = history.push(result.dest);
+                    updateState();
                 });
         });
 
-        undo.addEventListener('click', (e) => {
-            form.elements.src.value = image.src = history.pop();
-            count.innerText = history.length + 1;
+        prev.addEventListener('click', (e) => {
+            form.elements.src.value = image.src = history[--index];
+            updateState();
         });
+
+        next.addEventListener('click', (e) => {
+            form.elements.src.value = image.src = history[++index];
+            updateState();
+        });
+
+        function updateState() {
+            count.innerText = index + 1;
+            prev.disabled = index < 1;
+            next.disabled = index >= history.length - 1;
+        }
     });
 </script>
 
 <style>
     body {
+        overflow: hidden;
         margin: 0;
         height: 100%;
     }
@@ -143,7 +167,7 @@ $dirs = getDirs($baseDir);
             linear-gradient(-45deg, transparent 75%, rgba(255, 255, 255, .4) 0%) 15px 15px,
             linear-gradient(135deg, transparent 75%, rgba(255, 255, 255, .4) 0%) 15px 15px,
             linear-gradient(-45deg, transparent 75%, rgba(255, 255, 255, .4) 0%) 0 0,
-            #999;
+            #ddd;
         background-size: 30px 30px;
     }
     .imageWrap img {
@@ -156,8 +180,10 @@ $dirs = getDirs($baseDir);
         justify-content: space-between;
         align-items: center;
         padding: 4px;
+        white-space: nowrap;
     }
     .status button {
+        user-select: none;
         padding: 8px;
         background: #ccc;
         border: 1px solid #999;
@@ -168,6 +194,7 @@ $dirs = getDirs($baseDir);
         flex-wrap: wrap;
     }
     .buttons button {
+        user-select: none;
         box-sizing: border-box;
         flex: 1 0 50%;
         margin: 0;
@@ -185,5 +212,10 @@ $dirs = getDirs($baseDir);
         opacity: 1;
         box-shadow: none;
         outline: none;
+    }
+    @media (min-height: 800px) {
+        .buttons button {
+            padding: 24px 8px;
+        }
     }
 </style>
