@@ -66,7 +66,7 @@ $dirs = getDirs($baseDir);
     <div class="imageWrap">
         <img id="image">
     </div>
-    <div class="status">    
+    <div class="status">
         <div>
             <input type="text" readonly name="src" value="<?=$image?>" size="9">
             <span id="loading">Wait...</span>
@@ -95,10 +95,16 @@ $dirs = getDirs($baseDir);
         const prev = document.querySelector('#prev');
         const next = document.querySelector('#next');
 
-        const history = [];
+        const history = <?=json_encode([$image])?>;
         let index = 0;
 
-        image.src = <?=json_encode($image)?>;
+        function updateState() {
+            form.elements.src.value = image.src = history[index];
+            count.innerText = index + 1;
+            prev.disabled = index < 1;
+            next.disabled = index >= history.length - 1;
+        }
+        updateState();
 
         image.addEventListener('load', () => {
             loading.hidden = true;
@@ -122,31 +128,24 @@ $dirs = getDirs($baseDir);
             fetch('.', {method: 'POST', body})
                 .then((response) => response.json())
                 .then((result) => {
-                    form.elements.src.value = image.src = result.next;
+                    history[index++] = result.dest;
                     if (index === history.length) {
-                        index = history.push(result.dest);
-                    } else {
-                        history[index] = result.dest;
+                        history.push(result.next);
                     }
                     updateState();
+                    loading.hidden = true;
                 });
         });
 
         prev.addEventListener('click', (e) => {
-            form.elements.src.value = image.src = history[--index];
+            index--;
             updateState();
         });
 
         next.addEventListener('click', (e) => {
-            form.elements.src.value = image.src = history[++index];
+            index++;
             updateState();
         });
-
-        function updateState() {
-            count.innerText = index + 1;
-            prev.disabled = index < 1;
-            next.disabled = index >= history.length - 1;
-        }
     });
 </script>
 
@@ -168,7 +167,7 @@ $dirs = getDirs($baseDir);
         flex: 1 1 auto;
         height: 0;
         display: flex;
-        background: 
+        background:
             linear-gradient(135deg, transparent 75%, rgba(255, 255, 255, .4) 0%) 0 0,
             linear-gradient(-45deg, transparent 75%, rgba(255, 255, 255, .4) 0%) 15px 15px,
             linear-gradient(135deg, transparent 75%, rgba(255, 255, 255, .4) 0%) 15px 15px,
