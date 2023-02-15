@@ -1,0 +1,10 @@
+## Build
+
+    docker build . -t images-sorting
+
+## Usage
+
+Create images directory with "unsorted" subdirectory and other subdirectories for sorting
+
+    docker run -it --rm -p 8000:80 -v ${PWD}/images:/app/images images-sorting
+    # Open http://localhost:8000

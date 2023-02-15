@@ -1,5 +1,9 @@
 <?php
 
+if (php_sapi_name() === 'cli-server' && preg_match('/\.(png|jpg|jpeg|gif)$/i', $_SERVER['REQUEST_URI'])) {
+    return false;
+}
+
 $baseDir = 'images';
 
 if (!empty($_REQUEST['dir'])) {
@@ -7,6 +11,10 @@ if (!empty($_REQUEST['dir'])) {
 }
 
 $srcDir = "$baseDir/unsorted";
+if (!is_dir($srcDir)) {
+    echo 'Please create "unsorted" subdirectory for new images';
+    die();
+}
 
 $isAjax = isset($_SERVER['HTTP_ORIGIN']);
 
