@@ -19,8 +19,16 @@ if (!is_dir($srcDir)) {
 $isAjax = isset($_SERVER['HTTP_ORIGIN']);
 
 function dirCount($path) {
-    $di = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($path), RecursiveIteratorIterator::SELF_FIRST);
-    return iterator_count($di);
+    $count = 0;
+    if ($handle = opendir($path)) {
+        while (false !== ($entry = readdir($handle))) {
+            if ($entry[0] === '.')
+                continue;
+
+            $count++;
+        }
+    }
+    return $count;
 }
 
 function getFile($path) {
@@ -68,6 +76,7 @@ $dirs = getDirs($baseDir);
 ?>
 
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<title><?=htmlspecialchars($srcDir)?></title>
 
 <form class="wrap" id="form" method="post">
     <input type="hidden" name="dir" value="<?=@$_REQUEST['dir']?>">
@@ -213,6 +222,7 @@ $dirs = getDirs($baseDir);
         margin: 0;
         padding: 16px 8px;
         font-size: 15px;
+        color: black;
         border: none;
         border-top: 1px solid rgba(0, 0, 0, .2);
         opacity: .9;
